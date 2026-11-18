@@ -3,8 +3,11 @@ import { ScoresService } from './scores.service';
 import { ScoresController } from './scores.controller';
 import { SubjectRegistry } from './domain/subject-registry';
 import { GroupA } from './domain/group-a';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Score } from './entities/score.entity';
 
 @Module({
+  imports: [TypeOrmModule.forFeature([Score])],
   controllers: [ScoresController],
   providers: [
     ScoresService,

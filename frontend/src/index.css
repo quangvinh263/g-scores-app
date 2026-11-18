@@ -1,2 +1,31 @@
-@layer theme, base, antd, components, utilities;
 @import "tailwindcss";
+
+:root {
+  font-family: "Rubik", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #172033;
+  background: #f3f6fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: "Rubik", system-ui, sans-serif;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+.recharts-default-tooltip {
+  border-radius: 10px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 30px rgba(15, 37, 115, 0.12);
+}
