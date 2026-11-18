@@ -1,0 +1,16 @@
+# Dependencies & Build outputs
+node_modules/
+dist/
+build/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Dataset nặng (42MB)
+*.csv
+
+# Logs & OS files
+*.log
+.DS_Store
