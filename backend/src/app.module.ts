@@ -17,7 +17,8 @@ import { ScoresModule } from './scores/scores.module';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: true, // Chỉ bật true ở môi trường dev
+        synchronize: false,
+        migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
       }),
     }),
     ScoresModule,

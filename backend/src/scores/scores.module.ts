@@ -1,9 +1,24 @@
 import { Module } from '@nestjs/common';
 import { ScoresService } from './scores.service';
 import { ScoresController } from './scores.controller';
+import { SubjectRegistry } from './domain/subject-registry';
+import { GroupA } from './domain/group-a';
 
 @Module({
   controllers: [ScoresController],
-  providers: [ScoresService],
+  providers: [
+    ScoresService,
+    SubjectRegistry,
+    {
+      provide: GroupA,
+      inject: [SubjectRegistry],
+      useFactory: (registry: SubjectRegistry) =>
+        new GroupA([
+          registry.get('toan')!,
+          registry.get('vat_li')!,
+          registry.get('hoa_hoc')!,
+        ]),
+    },
+  ],
 })
 export class ScoresModule {}
