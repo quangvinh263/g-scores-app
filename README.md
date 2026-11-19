@@ -56,6 +56,36 @@ PostgreSQL credentials:
 - Username: `admin`
 - Password: `password123`
 
+### PostgreSQL SSL
+
+The backend supports SSL for managed PostgreSQL providers through these variables:
+
+```env
+DB_SSL=true
+DB_SSL_REJECT_UNAUTHORIZED=true
+# Optional PEM certificate bundle, with \n between lines:
+DB_SSL_CA="-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+```
+
+For local Docker PostgreSQL, keep `DB_SSL=false`. For managed databases, enable SSL and provide
+`DB_SSL_CA` when the provider requires a custom certificate authority. Set
+`DB_SSL_REJECT_UNAUTHORIZED=false` only for development environments or providers that do not
+provide a verifiable certificate chain.
+
+Docker Compose defaults use `DB_SSL=false` for local PostgreSQL. Override the backend database
+variables when deploying to a managed PostgreSQL provider:
+
+```bash
+DB_HOST=your-managed-host \
+DB_PORT=5432 \
+DB_NAME=gscores_db \
+DB_USERNAME=your_username \
+DB_PASSWORD=your_password \
+DB_SSL=true \
+DB_SSL_REJECT_UNAUTHORIZED=true \
+docker compose up --build -d
+```
+
 The backend container starts migrations and then seeds the CSV dataset.
 
 ## Run Manually

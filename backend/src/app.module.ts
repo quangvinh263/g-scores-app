@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScoresModule } from './scores/scores.module';
 import { AppController } from './app.controller';
+import { getPostgresSslOptions } from './database/postgres-ssl';
 
 @Module({
   controllers: [AppController],
@@ -18,6 +19,13 @@ import { AppController } from './app.controller';
         username: config.get<string>('DB_USERNAME'),
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
+        ssl: getPostgresSslOptions({
+          DB_SSL: config.get<string>('DB_SSL'),
+          DB_SSL_REJECT_UNAUTHORIZED: config.get<string>(
+            'DB_SSL_REJECT_UNAUTHORIZED',
+          ),
+          DB_SSL_CA: config.get<string>('DB_SSL_CA'),
+        }),
         autoLoadEntities: true,
         synchronize: false,
         migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
