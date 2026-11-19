@@ -40,7 +40,9 @@ export class ExamGroupRegistry {
         throw new Error(`Invalid subject configuration for exam group ${code}`);
       }
 
-      const resolvedSubjects = subjects.filter((subject) => subject !== undefined);
+      const resolvedSubjects = subjects.filter(
+        (subject) => subject !== undefined,
+      );
 
       this.groups.set(
         code,

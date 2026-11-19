@@ -7,9 +7,13 @@ export abstract class ExamGroup {
     public readonly subjects: readonly Subject[],
   ) {}
 
-  abstract calculate(scores: Readonly<Record<string, number | null>>): number | null;
+  abstract calculate(
+    scores: Readonly<Record<string, number | null>>,
+  ): number | null;
 
-  protected sumValidSubjects(scores: Readonly<Record<string, number | null>>): number | null {
+  protected sumValidSubjects(
+    scores: Readonly<Record<string, number | null>>,
+  ): number | null {
     let total = 0;
 
     for (const subject of this.subjects) {

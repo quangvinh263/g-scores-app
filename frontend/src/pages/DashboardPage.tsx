@@ -4,31 +4,20 @@ import {
   Button,
   Card,
   Segmented,
-  Statistic,
   Table,
   Tag,
   Typography,
 } from 'antd';
-import { ReloadOutlined, TrophyOutlined } from '@ant-design/icons';
+import { ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useTopGroupA } from '../hooks/useTopGroupA';
 import { useAppSettings } from '../context/appSettingsStore';
 import type { ExamGroupCode, ExamGroupTopItem } from '../services/scoresApi';
 import { PageHeading } from '../components/PageHeading';
+import { GroupStatsCards } from '../components/dashboard/GroupStatsCards';
+import { SUBJECT_LABELS, ADMISSION_GROUPS } from '../constants/subjects';
 
 const { Text } = Typography;
-
-const subjectLabels: Record<string, string> = {
-  toan: 'Mathematics',
-  ngu_van: 'Literature',
-  ngoai_ngu: 'Foreign Language',
-  vat_li: 'Physics',
-  hoa_hoc: 'Chemistry',
-  sinh_hoc: 'Biology',
-  lich_su: 'History',
-  dia_li: 'Geography',
-  gdcd: 'Civic Education',
-};
 
 export function DashboardPage() {
   const { settings } = useAppSettings();
@@ -69,7 +58,7 @@ export function DashboardPage() {
       ),
     },
     ...subjects.map((subject) => ({
-      title: subjectLabels[subject.code] ?? subject.name,
+      title: SUBJECT_LABELS[subject.code] ?? subject.name,
       dataIndex: 'scores',
       align: 'right' as const,
       render: (scores: Record<string, number>) =>
@@ -97,13 +86,10 @@ export function DashboardPage() {
             <Segmented
               value={group}
               onChange={(value) => setGroup(value as ExamGroupCode)}
-              options={[
-                { label: 'Group A', value: 'A' },
-                { label: 'Group A01', value: 'A01' },
-                { label: 'Group B', value: 'B' },
-                { label: 'Group C', value: 'C' },
-                { label: 'Group D01', value: 'D01' },
-              ]}
+              options={ADMISSION_GROUPS.map((value) => ({
+                label: value === 'A' ? 'Group A' : `Group ${value}`,
+                value,
+              }))}
             />
             <Button icon={<ReloadOutlined />} onClick={() => void reload()}>
               Refresh
@@ -112,41 +98,7 @@ export function DashboardPage() {
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="rounded-2xl border-0 shadow-[0_10px_30px_rgba(15,37,115,0.07)]">
-          <Statistic
-            title="Combination Subjects"
-            value={subjects.length}
-            suffix="subjects"
-          />
-          <div className="mt-2 flex flex-wrap gap-1">
-            {subjects.map((subject) => (
-              <Tag key={subject.code} color="blue">
-                {subjectLabels[subject.code] ?? subject.name}
-              </Tag>
-            ))}
-          </div>
-        </Card>
-        <Card className="rounded-2xl border-0 shadow-[0_10px_30px_rgba(15,37,115,0.07)]">
-          <Statistic
-            title="Highest Score"
-            value={data?.highest?.total ?? 0}
-            precision={2}
-            prefix={<TrophyOutlined />}
-          />
-          <Text type="secondary" className="mt-2 block">
-            SBD: <Text strong>{data?.highest?.sbd ?? 'N/A'}</Text>
-          </Text>
-        </Card>
-        <Card className="rounded-2xl border-0 shadow-[0_10px_30px_rgba(15,37,115,0.07)]">
-          <Statistic
-            title="Top 10 Average"
-            value={data?.top10Average ?? 0}
-            precision={2}
-            suffix="points"
-          />
-        </Card>
-      </div>
+      <GroupStatsCards data={data} />
 
       {error && <Alert type="error" showIcon message={error} />}
 

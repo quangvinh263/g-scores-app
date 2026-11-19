@@ -3,7 +3,7 @@ import { IsIn, IsOptional } from 'class-validator';
 
 export class TopQueryDto {
   @IsOptional()
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }): unknown =>
     typeof value === 'string' ? value.trim().toUpperCase() : value,
   )
   @IsIn(['A', 'A01', 'B', 'C', 'D01'], {

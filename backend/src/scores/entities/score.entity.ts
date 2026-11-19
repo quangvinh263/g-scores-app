@@ -2,7 +2,8 @@ import { Entity, Column, PrimaryColumn, Index } from 'typeorm';
 
 @Entity('scores')
 @Index('IDX_scores_group_a_complete', ['toan', 'vat_li', 'hoa_hoc'], {
-  where: '"toan" IS NOT NULL AND "vat_li" IS NOT NULL AND "hoa_hoc" IS NOT NULL',
+  where:
+    '"toan" IS NOT NULL AND "vat_li" IS NOT NULL AND "hoa_hoc" IS NOT NULL',
 })
 export class Score {
   @PrimaryColumn({ type: 'varchar', length: 20 })

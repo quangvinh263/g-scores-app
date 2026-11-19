@@ -5,6 +5,7 @@ import { useAppSettings } from '../context/appSettingsStore';
 import type { ExamGroupCode } from '../services/scoresApi';
 import { getTopGroup } from '../services/scoresApi';
 import { PageHeading } from '../components/PageHeading';
+import { ADMISSION_GROUPS } from '../constants/subjects';
 
 const { Text } = Typography;
 
@@ -78,13 +79,10 @@ export function SettingsPage() {
             block
             value={settings.defaultGroup}
             onChange={(value) => setDefaultGroup(value as ExamGroupCode)}
-            options={[
-              { label: 'Group A', value: 'A' },
-              { label: 'Group A01', value: 'A01' },
-              { label: 'Group B', value: 'B' },
-              { label: 'Group C', value: 'C' },
-              { label: 'Group D01', value: 'D01' },
-            ]}
+            options={ADMISSION_GROUPS.map((value) => ({
+              label: value === 'A' ? 'Group A' : `Group ${value}`,
+              value,
+            }))}
           />
         </Card>
       </div>

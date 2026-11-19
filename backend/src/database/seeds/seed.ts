@@ -40,7 +40,8 @@ async function seed(): Promise<void> {
   let inserted = 0;
 
   await new Promise<void>((resolve, reject) => {
-    const stream = fs.createReadStream(csvPath)
+    const stream = fs
+      .createReadStream(csvPath)
       .pipe(csv())
       .on('data', (row: CsvScoreRow) => {
         const sbd = row.sbd?.trim();
@@ -69,9 +70,11 @@ async function seed(): Promise<void> {
               inserted += count;
               stream.resume();
             })
-            .catch((error) => {
-              stream.destroy(error);
-              reject(error);
+            .catch((error: unknown) => {
+              const seedError =
+                error instanceof Error ? error : new Error(String(error));
+              stream.destroy(seedError);
+              reject(seedError);
             });
         }
       })

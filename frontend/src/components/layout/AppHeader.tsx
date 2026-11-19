@@ -50,7 +50,7 @@ export function AppHeader({
         title={isDark ? 'Switch to Light mode' : 'Switch to Dark mode'}
         icon={isDark ? <SunOutlined /> : <MoonOutlined />}
         onClick={onToggleTheme}
-        className="ml-auto text-white hover!text-white"
+        className="ml-auto text-white hover!text-white [&>span]:text-white [&_.anticon]:text-white"
       />
     </header>
   );
