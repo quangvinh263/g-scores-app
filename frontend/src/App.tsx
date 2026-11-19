@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   Alert,
   Button,
@@ -14,6 +14,9 @@ import {
   Typography,
   Grid,
   Segmented,
+  Switch,
+  Badge,
+  theme as antTheme,
 } from 'antd';
 import {
   BarChartOutlined,
@@ -40,6 +43,8 @@ import { useScoreSearch } from './hooks/useScoreSearch';
 import { useScoreReport } from './hooks/useScoreReport';
 import { useTopGroupA } from './hooks/useTopGroupA';
 import type { ExamGroupCode, ExamGroupTopItem } from './services/scoresApi';
+import { getTopGroup } from './services/scoresApi';
+import { useAppSettings } from './context/AppSettingsContext';
 
 type ViewKey = 'dashboard' | 'search' | 'reports' | 'settings';
 
@@ -61,10 +66,18 @@ function PageHeading({
   subtitle: string;
   action?: ReactNode;
 }) {
+  const { settings } = useAppSettings();
+
   return (
     <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <Title level={3} style={{ marginBottom: 4, color: '#172033' }}>
+        <Title
+          level={3}
+          style={{
+            marginBottom: 4,
+            color: settings.themeMode === 'dark' ? '#f8fafc' : '#172033',
+          }}
+        >
           {title}
         </Title>
         <Text type="secondary">{subtitle}</Text>
@@ -239,7 +252,8 @@ function ReportsView() {
 }
 
 function DashboardView() {
-  const [group, setGroup] = useState<ExamGroupCode>('A');
+  const { settings } = useAppSettings();
+  const [group, setGroup] = useState<ExamGroupCode>(settings.defaultGroup);
   const { data, loading, error, reload } = useTopGroupA(group);
 
   const subjectLabels: Record<string, string> = {
@@ -384,18 +398,130 @@ function DashboardView() {
 }
 
 function SettingsView() {
+  const { settings, setThemeMode, setDefaultGroup, resetSettings } =
+    useAppSettings();
+  const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>(
+    'checking',
+  );
+  const [checking, setChecking] = useState(false);
+
+  const checkBackend = async () => {
+    setChecking(true);
+    setApiStatus('checking');
+    try {
+      await getTopGroup('A');
+      setApiStatus('online');
+    } catch {
+      setApiStatus('offline');
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  useEffect(() => {
+    void checkBackend();
+  }, []);
+
   return (
     <div className="space-y-5">
       <PageHeading title="Settings" subtitle="Application and data connection information." />
-      <Card className="max-w-2xl rounded-2xl shadow-[0_10px_30px_rgba(15,37,115,0.06)]">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <Text type="secondary">Backend API</Text>
-            <Text strong>{import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api'}</Text>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <Card
+          title="Theme Mode"
+          className="rounded-2xl shadow-[0_10px_30px_rgba(15,37,115,0.06)]"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Text strong>Dark Mode</Text>
+              <div>
+                <Text type="secondary">
+                  {settings.themeMode === 'dark'
+                    ? 'Dark theme is active'
+                    : 'Light theme is active'}
+                </Text>
+              </div>
+            </div>
+            <Switch
+              checked={settings.themeMode === 'dark'}
+              onChange={(checked) => setThemeMode(checked ? 'dark' : 'light')}
+              checkedChildren="Dark"
+              unCheckedChildren="Light"
+            />
           </div>
-          <div className="flex items-center justify-between">
-            <Text type="secondary">Dataset</Text>
-            <Tag color="green">THPT 2024</Tag>
+        </Card>
+
+        <Card
+          title="Default Admission Group"
+          className="rounded-2xl shadow-[0_10px_30px_rgba(15,37,115,0.06)]"
+        >
+          <Text type="secondary" className="mb-3 block">
+            Automatically selected when Dashboard is opened.
+          </Text>
+          <Segmented
+            block
+            value={settings.defaultGroup}
+            onChange={(value) => setDefaultGroup(value as ExamGroupCode)}
+            options={[
+              { label: 'Group A', value: 'A' },
+              { label: 'Group A01', value: 'A01' },
+              { label: 'Group B', value: 'B' },
+              { label: 'Group C', value: 'C' },
+              { label: 'Group D01', value: 'D01' },
+            ]}
+          />
+        </Card>
+      </div>
+
+      <Card
+        title="System Information"
+        className="max-w-4xl rounded-2xl shadow-[0_10px_30px_rgba(15,37,115,0.06)]"
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800">
+            <Text type="secondary" className="block">
+              Dataset
+            </Text>
+            <Text strong>THPT 2024 — 1,061,605 records</Text>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800">
+            <Text type="secondary" className="block">
+              Backend API
+            </Text>
+            <div className="flex items-center justify-between gap-3">
+              <Text strong>
+                {import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api'}
+              </Text>
+              {apiStatus === 'online' && (
+                <Badge status="success" text="Connected" />
+              )}
+              {apiStatus === 'offline' && (
+                <Badge status="error" text="Disconnected" />
+              )}
+              {apiStatus === 'checking' && (
+                <Badge status="processing" text="Checking" />
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Text type="secondary">
+            Restore theme and default admission group.
+          </Text>
+          <div className="flex gap-2">
+            <Button
+              icon={<ReloadOutlined />}
+              loading={checking}
+              onClick={() => void checkBackend()}
+            >
+              Check API
+            </Button>
+            <Button
+              danger
+              onClick={resetSettings}
+            >
+              Reset to Defaults
+            </Button>
           </div>
         </div>
       </Card>
@@ -417,8 +543,10 @@ const menuItems: Array<{
 function App() {
   const [activeView, setActiveView] = useState<ViewKey>('dashboard');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { settings } = useAppSettings();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
+  const isDark = settings.themeMode === 'dark';
 
   const selectView = (key: ViewKey) => {
     setActiveView(key);
@@ -434,8 +562,8 @@ function App() {
           onClick={() => selectView(item.key)}
           className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition ${
             activeView === item.key
-              ? 'bg-white/20 text-white shadow-sm'
-              : 'text-blue-100 hover:bg-white/10 hover:text-white'
+              ? 'bg-[#0f2573] text-white shadow-sm'
+              : 'text-[#172033] hover:bg-white/60'
           }`}
         >
           <span className="text-lg">{item.icon}</span>
@@ -455,6 +583,7 @@ function App() {
   return (
     <ConfigProvider
       theme={{
+        algorithm: isDark ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
         token: {
           colorPrimary: '#0f2573',
           borderRadius: 10,
@@ -462,7 +591,7 @@ function App() {
         },
       }}
     >
-      <div className="min-h-screen bg-[#f3f6fb]">
+      <div className={`min-h-screen ${isDark ? 'bg-[#141414] text-slate-100' : 'bg-[#f3f6fb] text-[#172033]'}`}>
         <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center bg-[#0f2573] px-4 text-white shadow-lg sm:px-6">
           {isMobile && (
             <Button
@@ -487,8 +616,8 @@ function App() {
         </header>
 
         {!isMobile && (
-          <aside className="fixed bottom-0 left-0 top-16 z-30 w-60 bg-linear-to-b from-[#0f2573] to-[#162d68] p-5">
-            <Text className="mb-4 block px-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">
+          <aside className="fixed bottom-0 left-0 top-16 z-30 w-60 bg-linear-to-b from-[#facc15] to-[#eab308] p-5 shadow-[8px_0_24px_rgba(15,37,115,0.08)]">
+            <Text className="mb-4 block px-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#713f12]">
               Menu
             </Text>
             {menu}
