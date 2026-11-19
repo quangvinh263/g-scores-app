@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Badge, Button, Card, Segmented, Typography } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { useAppSettings } from '../context/appSettingsStore';
-import type { ExamGroupCode } from '../services/scoresApi';
 import { getTopGroup } from '../services/scoresApi';
 import { PageHeading } from '../components/PageHeading';
 import { ADMISSION_GROUPS } from '../constants/subjects';
@@ -47,49 +46,61 @@ export function SettingsPage() {
       <div className="grid gap-5 xl:grid-cols-2">
         <Card
           title="Theme Mode"
-          className="rounded-2xl shadow-[0_10px_30px_rgba(15,37,115,0.06)]"
+          className="w-full rounded-2xl shadow-[0_10px_30px_rgba(15,37,115,0.06)]"
         >
           <Text type="secondary" className="mb-3 block">
             {settings.themeMode === 'system'
               ? `Following system preference (${resolvedTheme} mode)`
               : `${resolvedTheme === 'dark' ? 'Dark' : 'Light'} mode is active`}
           </Text>
-          <Segmented
-            block
-            value={settings.themeMode}
-            onChange={(value) =>
-              setThemeMode(value as 'light' | 'dark' | 'system')
-            }
-            options={[
-              { label: 'Light', value: 'light' },
-              { label: 'Dark', value: 'dark' },
-              { label: 'System', value: 'system' },
-            ]}
-          />
+          <div className="w-full overflow-x-auto pb-1">
+            <Segmented
+              value={settings.themeMode}
+              onChange={(value) =>
+                setThemeMode(value as 'light' | 'dark' | 'system')
+              }
+              className="whitespace-nowrap"
+              options={[
+                { label: 'Light', value: 'light' },
+                { label: 'Dark', value: 'dark' },
+                { label: 'System', value: 'system' },
+              ]}
+            />
+          </div>
         </Card>
 
         <Card
           title="Default Admission Group"
-          className="rounded-2xl shadow-[0_10px_30px_rgba(15,37,115,0.06)]"
+          className="w-full rounded-2xl shadow-[0_10px_30px_rgba(15,37,115,0.06)]"
         >
           <Text type="secondary" className="mb-3 block">
             Automatically selected when Dashboard is opened.
           </Text>
-          <Segmented
-            block
-            value={settings.defaultGroup}
-            onChange={(value) => setDefaultGroup(value as ExamGroupCode)}
-            options={ADMISSION_GROUPS.map((value) => ({
-              label: value === 'A' ? 'Group A' : `Group ${value}`,
-              value,
-            }))}
-          />
+          <div className="grid w-full grid-cols-3 gap-2">
+            {ADMISSION_GROUPS.map((value) => {
+              const active = settings.defaultGroup === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setDefaultGroup(value)}
+                  className={`min-h-10 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap transition ${
+                    active
+                      ? 'bg-[#0f2573] text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {value === 'A' ? 'Group A' : `Group ${value}`}
+                </button>
+              );
+            })}
+          </div>
         </Card>
       </div>
 
       <Card
         title="System Information"
-        className="max-w-8xl rounded-2xl shadow-[0_10px_30px_rgba(15,37,115,0.06)]"
+        className="w-full rounded-2xl shadow-[0_10px_30px_rgba(15,37,115,0.06)]"
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div
