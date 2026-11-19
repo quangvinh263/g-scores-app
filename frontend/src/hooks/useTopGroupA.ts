@@ -23,8 +23,22 @@ export function useTopGroupA(group: ExamGroupCode) {
   }, [group]);
 
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    let active = true;
+    getTopGroup(group)
+      .then((result) => {
+        if (active) setData(result);
+      })
+      .catch(() => {
+        if (active) setError('Could not load the leaderboard.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [group]);
 
   return { data, loading, error, reload };
 }

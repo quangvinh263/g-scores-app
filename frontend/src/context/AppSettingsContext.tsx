@@ -1,30 +1,20 @@
 import {
-  createContext,
-  useContext,
   useEffect,
   useState,
   type ReactNode,
 } from 'react';
 import type { ExamGroupCode } from '../services/scoresApi';
-
-export type ThemeMode = 'light' | 'dark';
-
-export interface AppSettings {
-  themeMode: ThemeMode;
-  defaultGroup: ExamGroupCode;
-}
-
-interface AppSettingsContextValue {
-  settings: AppSettings;
-  setThemeMode: (themeMode: ThemeMode) => void;
-  setDefaultGroup: (defaultGroup: ExamGroupCode) => void;
-  resetSettings: () => void;
-}
+import {
+  AppSettingsContext,
+  type AppSettings,
+  type ResolvedTheme,
+  type ThemeMode,
+} from './appSettingsStore';
 
 const STORAGE_KEY = 'g-scores-app-settings';
 
 const DEFAULT_SETTINGS: AppSettings = {
-  themeMode: 'light',
+  themeMode: 'system',
   defaultGroup: 'A',
 };
 
@@ -35,7 +25,11 @@ function readSettings(): AppSettings {
 
     const parsed = JSON.parse(stored) as Partial<AppSettings>;
     const themeMode =
-      parsed.themeMode === 'dark' ? 'dark' : 'light';
+      parsed.themeMode === 'light' ||
+      parsed.themeMode === 'dark' ||
+      parsed.themeMode === 'system'
+        ? parsed.themeMode
+        : 'system';
     const defaultGroup =
       parsed.defaultGroup &&
       ['A', 'A01', 'B', 'C', 'D01'].includes(parsed.defaultGroup)
@@ -48,18 +42,42 @@ function readSettings(): AppSettings {
   }
 }
 
-const AppSettingsContext = createContext<AppSettingsContextValue | null>(null);
-
 export function AppSettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(readSettings);
+  const [systemDark, setSystemDark] = useState(
+    () => window.matchMedia('(prefers-color-scheme: dark)').matches,
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (event: MediaQueryListEvent) =>
+      setSystemDark(event.matches);
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
   }, [settings]);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = settings.themeMode;
-  }, [settings.themeMode]);
+    const resolvedTheme =
+      settings.themeMode === 'system'
+        ? systemDark
+          ? 'dark'
+          : 'light'
+        : settings.themeMode;
+
+    document.documentElement.dataset.theme = resolvedTheme;
+  }, [settings.themeMode, systemDark]);
+
+  const resolvedTheme: ResolvedTheme =
+    settings.themeMode === 'system'
+      ? systemDark
+        ? 'dark'
+        : 'light'
+      : settings.themeMode;
 
   const setThemeMode = (themeMode: ThemeMode) => {
     setSettings((current) => ({ ...current, themeMode }));
@@ -75,17 +93,15 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppSettingsContext.Provider
-      value={{ settings, setThemeMode, setDefaultGroup, resetSettings }}
+      value={{
+        settings,
+        resolvedTheme,
+        setThemeMode,
+        setDefaultGroup,
+        resetSettings,
+      }}
     >
       {children}
     </AppSettingsContext.Provider>
   );
-}
-
-export function useAppSettings(): AppSettingsContextValue {
-  const context = useContext(AppSettingsContext);
-  if (!context) {
-    throw new Error('useAppSettings must be used within AppSettingsProvider');
-  }
-  return context;
 }
