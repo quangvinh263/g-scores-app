@@ -13,6 +13,7 @@ import {
   Tag,
   Typography,
   Grid,
+  Segmented,
 } from 'antd';
 import {
   BarChartOutlined,
@@ -38,7 +39,7 @@ import {
 import { useScoreSearch } from './hooks/useScoreSearch';
 import { useScoreReport } from './hooks/useScoreReport';
 import { useTopGroupA } from './hooks/useTopGroupA';
-import type { TopGroupAItem } from './services/scoresApi';
+import type { ExamGroupCode, ExamGroupTopItem } from './services/scoresApi';
 
 type ViewKey = 'dashboard' | 'search' | 'reports' | 'settings';
 
@@ -238,9 +239,25 @@ function ReportsView() {
 }
 
 function DashboardView() {
-  const { data, loading, error, reload } = useTopGroupA();
+  const [group, setGroup] = useState<ExamGroupCode>('A');
+  const { data, loading, error, reload } = useTopGroupA(group);
 
-  const columns: ColumnsType<TopGroupAItem> = [
+  const subjectLabels: Record<string, string> = {
+    toan: 'Mathematics',
+    ngu_van: 'Literature',
+    ngoai_ngu: 'Foreign Language',
+    vat_li: 'Physics',
+    hoa_hoc: 'Chemistry',
+    sinh_hoc: 'Biology',
+    lich_su: 'History',
+    dia_li: 'Geography',
+    gdcd: 'Civic Education',
+  };
+
+  const subjects = data?.subjects ?? [];
+  const top10 = data?.top10 ?? [];
+
+  const columns: ColumnsType<ExamGroupTopItem> = [
     {
       title: 'Rank',
       dataIndex: 'rank',
@@ -262,13 +279,17 @@ function DashboardView() {
       ),
     },
     {
-      title: 'Registration',
+      title: 'Registration Number',
       dataIndex: 'sbd',
       render: (sbd: string) => <Text strong className="tracking-wide">{sbd}</Text>,
     },
-    { title: 'Toán', dataIndex: 'toan', align: 'right', render: (value: number) => value.toFixed(2) },
-    { title: 'Vật lý', dataIndex: 'vat_li', align: 'right', render: (value: number) => value.toFixed(2) },
-    { title: 'Hóa học', dataIndex: 'hoa_hoc', align: 'right', render: (value: number) => value.toFixed(2) },
+    ...subjects.map((subject) => ({
+      title: subjectLabels[subject.code] ?? subject.name,
+      dataIndex: 'scores',
+      align: 'right' as const,
+      render: (scores: Record<string, number>) =>
+        (scores[subject.code] ?? 0).toFixed(2),
+    })),
     {
       title: 'Total',
       dataIndex: 'total',
@@ -285,27 +306,59 @@ function DashboardView() {
     <div className="space-y-5">
       <PageHeading
         title="Dashboard"
-        subtitle="Overview of the top-performing candidates in Group A."
+        subtitle={`Top-performing candidates in ${data?.name ?? 'Group A'}.`}
         action={
-          <Button icon={<ReloadOutlined />} onClick={() => void reload()}>
-            Refresh
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Segmented
+              value={group}
+              onChange={(value) => setGroup(value as ExamGroupCode)}
+              options={[
+                { label: 'Group A', value: 'A' },
+                { label: 'Group A01', value: 'A01' },
+                { label: 'Group B', value: 'B' },
+                { label: 'Group C', value: 'C' },
+                { label: 'Group D01', value: 'D01' },
+              ]}
+            />
+            <Button icon={<ReloadOutlined />} onClick={() => void reload()}>
+              Refresh
+            </Button>
+          </div>
         }
       />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="rounded-2xl border-0 shadow-[0_10px_30px_rgba(15,37,115,0.07)]">
-          <Statistic title="Top candidates" value={10} prefix={<TrophyOutlined />} />
-        </Card>
-        <Card className="rounded-2xl border-0 shadow-[0_10px_30px_rgba(15,37,115,0.07)]">
-          <Statistic title="Group A subjects" value={3} suffix="môn" />
+          <Statistic
+            title="Combination Subjects"
+            value={subjects.length}
+            suffix="subjects"
+          />
+          <div className="mt-2 flex flex-wrap gap-1">
+            {subjects.map((subject) => (
+              <Tag key={subject.code} color="blue">
+                {subjectLabels[subject.code] ?? subject.name}
+              </Tag>
+            ))}
+          </div>
         </Card>
         <Card className="rounded-2xl border-0 shadow-[0_10px_30px_rgba(15,37,115,0.07)]">
           <Statistic
-            title="Highest score"
-            value={data[0]?.total ?? 0}
+            title="Highest Score"
+            value={data?.highest?.total ?? 0}
             precision={2}
-            suffix="/ 30"
+            prefix={<TrophyOutlined />}
+          />
+          <Text type="secondary" className="mt-2 block">
+            SBD: <Text strong>{data?.highest?.sbd ?? 'N/A'}</Text>
+          </Text>
+        </Card>
+        <Card className="rounded-2xl border-0 shadow-[0_10px_30px_rgba(15,37,115,0.07)]">
+          <Statistic
+            title="Top 10 Average"
+            value={data?.top10Average ?? 0}
+            precision={2}
+            suffix="points"
           />
         </Card>
       </div>
@@ -313,13 +366,13 @@ function DashboardView() {
       {error && <Alert type="error" showIcon message={error} />}
 
       <Card
-        title={<span className="font-semibold text-[#0f2573]">Top 10 - Khối A</span>}
+        title={<span className="font-semibold text-[#0f2573]">Top 10 - {data?.name ?? 'Group A'}</span>}
         className="rounded-2xl shadow-[0_10px_30px_rgba(15,37,115,0.06)]"
       >
         <Table
           rowKey="sbd"
           columns={columns}
-          dataSource={data}
+          dataSource={top10}
           loading={loading}
           pagination={false}
           scroll={{ x: 720 }}

@@ -5,6 +5,7 @@ import { SubjectRegistry } from './domain/subject-registry';
 import { GroupA } from './domain/group-a';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Score } from './entities/score.entity';
+import { ExamGroupRegistry } from './domain/exam-group-registry';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Score])],
@@ -12,6 +13,7 @@ import { Score } from './entities/score.entity';
   providers: [
     ScoresService,
     SubjectRegistry,
+    ExamGroupRegistry,
     {
       provide: GroupA,
       inject: [SubjectRegistry],

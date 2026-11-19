@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getTopGroupA, type TopGroupAItem } from '../services/scoresApi';
+import {
+  getTopGroup,
+  type ExamGroupCode,
+  type ExamGroupTopResponse,
+} from '../services/scoresApi';
 
-export function useTopGroupA() {
-  const [data, setData] = useState<TopGroupAItem[]>([]);
+export function useTopGroupA(group: ExamGroupCode) {
+  const [data, setData] = useState<ExamGroupTopResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -10,13 +14,13 @@ export function useTopGroupA() {
     setLoading(true);
     setError(null);
     try {
-      setData(await getTopGroupA());
+      setData(await getTopGroup(group));
     } catch {
       setError('Could not load the Group A leaderboard.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [group]);
 
   useEffect(() => {
     void reload();

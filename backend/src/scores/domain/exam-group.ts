@@ -1,7 +1,11 @@
 import { Subject } from './subject';
 
 export abstract class ExamGroup {
-  constructor(public readonly subjects: readonly Subject[]) {}
+  constructor(
+    public readonly code: string,
+    public readonly name: string,
+    public readonly subjects: readonly Subject[],
+  ) {}
 
   abstract calculate(scores: Readonly<Record<string, number | null>>): number | null;
 
@@ -17,5 +21,11 @@ export abstract class ExamGroup {
     }
 
     return total;
+  }
+}
+
+export class StandardExamGroup extends ExamGroup {
+  calculate(scores: Readonly<Record<string, number | null>>): number | null {
+    return this.sumValidSubjects(scores);
   }
 }

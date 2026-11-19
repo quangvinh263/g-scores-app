@@ -1,6 +1,7 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ScoresService } from './scores.service';
 import { SbdParamDto } from './dto/sbd-param.dto';
+import { TopQueryDto } from './dto/top-query.dto';
 
 @Controller('scores')
 export class ScoresController {
@@ -14,6 +15,11 @@ export class ScoresController {
   @Get('top/group-a')
   getTopGroupA() {
     return this.scoresService.getTopGroupA();
+  }
+
+  @Get('top')
+  getTopGroup(@Query() query: TopQueryDto) {
+    return this.scoresService.getTopGroup(query.group ?? 'A');
   }
 
   @Get(':sbd')

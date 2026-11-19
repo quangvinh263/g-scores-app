@@ -38,6 +38,24 @@ export interface TopGroupAItem {
   total: number;
 }
 
+export type ExamGroupCode = 'A' | 'A01' | 'B' | 'C' | 'D01';
+
+export interface ExamGroupTopItem {
+  rank: number;
+  sbd: string;
+  scores: Record<string, number>;
+  total: number;
+}
+
+export interface ExamGroupTopResponse {
+  group: ExamGroupCode;
+  name: string;
+  subjects: Array<{ code: string; name: string }>;
+  top10: ExamGroupTopItem[];
+  highest: { sbd: string; total: number } | null;
+  top10Average: number | null;
+}
+
 export async function getScoreBySbd(sbd: string): Promise<StudentScore> {
   const response = await api.get<StudentScore>(`/scores/${encodeURIComponent(sbd)}`);
   return response.data;
@@ -50,5 +68,15 @@ export async function getLevelReport(): Promise<LevelReportItem[]> {
 
 export async function getTopGroupA(): Promise<TopGroupAItem[]> {
   const response = await api.get<TopGroupAItem[]>('/scores/top/group-a');
+  return response.data;
+}
+
+export async function getTopGroup(
+  group: ExamGroupCode,
+): Promise<ExamGroupTopResponse> {
+  const response = await api.get<ExamGroupTopResponse>(
+    '/scores/top',
+    { params: { group } },
+  );
   return response.data;
 }
