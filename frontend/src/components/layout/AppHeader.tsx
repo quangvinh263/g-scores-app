@@ -26,7 +26,7 @@ export function AppHeader({
           type="text"
           aria-label="Open navigation"
           icon={<MenuOutlined />}
-          className="mr-2 text-white hover!text-white"
+          className="mr-2 text-white hover:bg-white/10 [&_.anticon]:text-white [&_.anticon>svg]:text-white"
           onClick={onOpenMenu}
         />
       )}

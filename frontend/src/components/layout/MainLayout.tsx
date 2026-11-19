@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Drawer, Grid } from 'antd';
+import { Grid } from 'antd';
 import { AppHeader } from './AppHeader';
 import { AppSidebar, type ViewKey } from './AppSidebar';
 
@@ -25,7 +25,7 @@ export function MainLayout({
   children,
 }: MainLayoutProps) {
   const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
+  const isMobile = !screens.lg;
 
   return (
     <div
@@ -46,39 +46,21 @@ export function MainLayout({
         activeView={activeView}
         isDark={isDark}
         isMobile={isMobile}
+        open={drawerOpen}
+        onClose={onCloseDrawer}
         onSelect={onSelectView}
       />
 
-      <Drawer
-        placement="left"
-        open={drawerOpen}
-        onClose={onCloseDrawer}
-        width={270}
-        styles={{
-          body: { background: isDark ? '#111827' : '#ffffff' },
-          header: { background: isDark ? '#111827' : '#ffffff' },
-        }}
-        title={
-          <span
-            className={
-              isDark
-                ? 'font-semibold text-slate-100'
-                : 'font-semibold text-[#0f2573]'
-            }
-          >
-            G-Scores Menu
-          </span>
-        }
-      >
-        <AppSidebar
-          activeView={activeView}
-          isDark={isDark}
-          isMobile
-          onSelect={onSelectView}
+      {isMobile && drawerOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation overlay"
+          onClick={onCloseDrawer}
+          className="fixed inset-0 z-40 bg-black/50"
         />
-      </Drawer>
+      )}
 
-      <main className={`pt-16 ${isMobile ? '' : 'ml-60'}`}>
+      <main className="pt-16 lg:ml-60">
         <div className="mx-auto max-w-[1500px] p-4 sm:p-6 lg:p-8">
           {children}
         </div>

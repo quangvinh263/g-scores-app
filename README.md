@@ -122,6 +122,20 @@ npm run dev
 
 The Vite development server normally runs at http://localhost:5173.
 
+For Docker/Nginx deployment, set `VITE_API_URL=/api`. For a separate frontend deployment such
+as Vercel, set `VITE_API_URL=https://g-scores-app-ydap.onrender.com/api`.
+
+## Production Configuration
+
+The deployed frontend is hosted on Vercel and the NestJS backend is hosted on Render:
+
+- Frontend: `g-scores-app-three.vercel.app`
+- Backend: `g-scores-app-ydap.onrender.com`
+- Database: managed PostgreSQL with SSL enabled
+
+Ensure the backend deployment has `DB_SSL=true`, `DB_SSL_REJECT_UNAUTHORIZED=true`, and the
+database credentials and optional `DB_SSL_CA` configured by the hosting provider.
+
 ## Validation
 
 ```bash
@@ -137,5 +151,6 @@ npm run build
 
 ## Live Demo
 
-<!-- Replace this placeholder after deployment. -->
-Live Demo: `https://YOUR-LIVE-DEMO-URL.example`
+- **Live Application:** https://g-scores-app-three.vercel.app/
+- **Backend API:** https://g-scores-app-ydap.onrender.com/api
+- **Backend Health:** https://g-scores-app-ydap.onrender.com/api/health
