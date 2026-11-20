@@ -1,106 +1,83 @@
 # G-Scores
 
-G-Scores is a full-stack admission-score analytics application for the 2024 Vietnamese national high-school examination.
+G-Scores is a full-stack admission-score analytics application for the 2024 Vietnamese national high-school examination
+
+## Live Demo
+
+- **Live Application:** https://g-scores-app-three.vercel.app/
+- **Backend API:** https://g-scores-app-ydap.onrender.com/api
+- **Backend Health:** https://g-scores-app-ydap.onrender.com/api/health
+
+> **Note:** The backend is hosted on Render's free tier and spins down after 15 minutes of inactivity. The first request may take 30–50 seconds while the server completes its cold start. If data loading is initially slow, please wait a moment and refresh the page.
 
 ## Features
 
-- Search detailed scores by 8-digit registration number.
-- View score distributions across Excellent, Good, Average, and Weak levels.
-- Compare Top 10 candidates for admission groups A, A01, B, C, and D01.
-- Use responsive Light, Dark, and System themes.
-- Persist the default admission group and theme in browser local storage.
+- **Score Lookup:** Search detailed subject scores and performance levels by 8-digit registration number (`SBD`).
+- **Score Distribution Reports:** Visualize candidate score distributions across four levels (*Excellent* $\ge 8.0$, *Good* $6.0 - < 8.0$, *Average* $4.0 - < 6.0$, *Weak* $< 4.0$) for all 9 subjects.
+- **Admission Group Leaderboards:** Compare Top 10 highest-scoring candidates across groups **A**, **A01**, **B**, **C**, and **D01**.
+- **Personalization & UI:** Responsive layout with Light, Dark, and System theme modes, plus persistent default admission group settings stored in `localStorage`.
 
 ## Tech Stack
 
 - **Backend:** NestJS, TypeScript, TypeORM, PostgreSQL
 - **Frontend:** React, Vite, TypeScript, Ant Design, Tailwind CSS, Recharts
-- **Infrastructure:** Docker Compose, Nginx, GitHub Actions
+- **Infrastructure:** Docker Compose, Nginx, GitHub Actions CI
 
-## Architecture
+## Architecture & Engineering Highlights
 
-The backend uses OOP domain classes in `backend/src/scores/domain/`:
+The backend follows a modular, feature-based architecture with pure OOP domain modeling in `backend/src/scores/domain/`:
 
-- `Subject` validates scores and classifies each 0-10 subject score into one of four levels.
-- `ExamGroup` encapsulates combination-total calculation.
-- `GroupA` and `StandardExamGroup` provide concrete combination behavior.
-- `SubjectRegistry` owns subject metadata.
-- `ExamGroupRegistry` provides A, A01, B, C, and D01 groups.
+- `Subject` validates 0–10 scores and classifies each subject score into one of the four performance tiers.
+- `ExamGroup` (Abstract Class) encapsulates combination validation and total-score calculation contracts.
+- `GroupA` and `StandardExamGroup` implement concrete combination behaviors following the Open/Closed Principle.
+- `SubjectRegistry` & `ExamGroupRegistry` manage subject metadata and admission groups (`A`, `A01`, `B`, `C`, `D01`) without coupling business rules to controllers or queries.
 
-Database schema changes are managed through TypeORM migrations. CSV ingestion uses a streaming seeder and 3,000-row batches.
+Database schema and indexes are managed through TypeORM migrations (`1700000000000-CreateScoresTable`). Large-scale CSV ingestion uses a Node.js streaming seeder inserting 3,000-row batches to keep memory usage low.
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/health` | Backend health status |
+| `GET` | `/api/health` | Backend liveness status |
 | `GET` | `/api/health/ready` | PostgreSQL readiness status |
-| `GET` | `/api/scores/:sbd` | Scores and levels for one registration number |
-| `GET` | `/api/scores/report/levels` | Candidate counts by subject and score level |
-| `GET` | `/api/scores/top?group=A` | Top 10 for A, A01, B, C, or D01 |
-| `GET` | `/api/scores/top/group-a` | Legacy Top 10 Group A response |
+| `GET` | `/api/scores/:sbd` | Detailed scores and levels for an 8-digit registration number |
+| `GET` | `/api/scores/report/levels` | Candidate counts grouped by subject and score level |
+| `GET` | `/api/scores/top?group=A` | Top 10 candidates for group `A`, `A01`, `B`, `C`, or `D01` |
+| `GET` | `/api/scores/top/group-a` | Top 10 candidates for Group A |
 
 ## Run with Docker
 
+### 1. Start all services
+
+For production-style environment overrides, copy `.env.example` to `.env` and update the values:
+
+```bash
+cp .env.example .env
+```
+
 ```bash
 docker compose up --build -d
 ```
 
-Services:
+Services & default ports:
+- **Frontend (Nginx):** http://localhost:8080
+- **Backend API:** http://localhost:3000
+- **PostgreSQL:** `localhost:5432` (`DB_NAME=gscores_db`, `DB_USERNAME=admin`, `DB_PASSWORD=password123`)
 
-- Frontend: http://localhost:8080
-- Backend: http://localhost:3000
-- PostgreSQL: `localhost:5432`
+### 2. Seed the dataset
 
-PostgreSQL credentials:
-
-- Database: `gscores_db`
-- Username: `admin`
-- Password: `password123`
-
-### PostgreSQL SSL
-
-The backend supports SSL for managed PostgreSQL providers through these variables:
-
-```env
-DB_SSL=true
-DB_SSL_REJECT_UNAUTHORIZED=true
-# Optional PEM certificate bundle, with \n between lines:
-DB_SSL_CA="-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
-```
-
-For local Docker PostgreSQL, keep `DB_SSL=false`. For managed databases, enable SSL and provide
-`DB_SSL_CA` when the provider requires a custom certificate authority. Set
-`DB_SSL_REJECT_UNAUTHORIZED=false` only for development environments or providers that do not
-provide a verifiable certificate chain.
-
-Docker Compose defaults use `DB_SSL=false` for local PostgreSQL. Override the backend database
-variables when deploying to a managed PostgreSQL provider:
+The backend container automatically runs pending TypeORM migrations on startup. To populate the 1,061,605 records locally, place `diem_thi_thpt_2024.csv` inside `backend/data/` (create the folder if it does not exist), copy it into the running backend container, and execute the seeder:
 
 ```bash
-DB_HOST=your-managed-host \
-DB_PORT=5432 \
-DB_NAME=gscores_db \
-DB_USERNAME=your_username \
-DB_PASSWORD=your_password \
-DB_SSL=true \
-DB_SSL_REJECT_UNAUTHORIZED=true \
-docker compose up --build -d
+docker compose cp backend/data/diem_thi_thpt_2024.csv backend:/app/data/diem_thi_thpt_2024.csv
+docker compose exec backend npm run seed
 ```
 
-The backend container runs pending migrations and starts the API. The CSV seeder is run explicitly
-to seed the database once:
+If the CSV was present when the backend image was built, it is already available in `/app/data` and the copy step can be skipped.
 
-```bash
-cd backend
-npm run seed
-```
+> The `.csv` dataset and `.env` files are intentionally excluded from Git. Do not commit them.
 
-## Health Endpoints
-
-- `GET /api/health` - liveness check for the backend process.
-- `GET /api/health/ready` - readiness check that executes `SELECT 1` against PostgreSQL.
-
-## Run Manually
+## Run Manually (Local Development)
 
 ### 1. Start PostgreSQL
 
@@ -108,9 +85,9 @@ npm run seed
 docker compose up -d postgres
 ```
 
-### 2. Start the backend
+### 2. Configure & start the Backend
 
-Copy `backend/.env.example` to `backend/.env`, then:
+Copy `backend/.env.example` to `backend/.env`, place `diem_thi_thpt_2024.csv` in the dataset path, then run:
 
 ```bash
 cd backend
@@ -120,11 +97,11 @@ npm run seed
 npm run start:dev
 ```
 
-The backend runs at http://localhost:3000 with the `/api` prefix.
+The API will be available at `http://localhost:3000/api`.
 
-### 3. Start the frontend
+### 3. Configure & start the Frontend
 
-Create `frontend/.env` from `frontend/.env.example`, then:
+Copy `frontend/.env.example` to `frontend/.env` (`VITE_API_URL=http://localhost:3000/api`), then run:
 
 ```bash
 cd frontend
@@ -132,41 +109,28 @@ npm install
 npm run dev
 ```
 
-The Vite development server normally runs at http://localhost:5173.
+The Vite development server will start at `http://localhost:5173`.
 
-For Docker/Nginx deployment, set `VITE_API_URL=/api`. For a separate frontend deployment such
-as Vercel, set `VITE_API_URL=https://g-scores-app-ydap.onrender.com/api`.
+## PostgreSQL SSL & Production Configuration
 
-## Production Configuration
+- **Frontend (Vercel):** Deployed from `frontend/` with `VITE_API_URL=https://g-scores-app-ydap.onrender.com/api`.
+- **Backend (Render) & Managed PostgreSQL:** Configure `DB_SSL=true` (and optional `DB_SSL_CA` PEM bundle). Keep `DB_SSL=false` for local Docker PostgreSQL.
+- **CORS:** Set `CORS_ORIGIN` in the backend deployment to an exact origin without a trailing slash:
+  ```env
+  CORS_ORIGIN=https://g-scores-app-three.vercel.app
+  ```
 
-The deployed frontend is hosted on Vercel and the NestJS backend is hosted on Render:
-
-- Frontend: `g-scores-app-three.vercel.app`
-- Backend: `g-scores-app-ydap.onrender.com`
-- Database: managed PostgreSQL with SSL enabled
-
-Ensure the backend deployment has `DB_SSL=true`, `DB_SSL_REJECT_UNAUTHORIZED=true`, and the
-database credentials and optional `DB_SSL_CA` configured by the hosting provider.
-
-## Validation
+## Testing & Validation
 
 ```bash
+# Backend unit tests, lint & build
 cd backend
 npm run lint
 npm test -- --runInBand
 npm run build
 
+# Frontend lint & build
 cd ../frontend
 npm run lint
 npm run build
 ```
-
-## Live Demo
-
-- **Live Application:** https://g-scores-app-three.vercel.app/
-- **Backend API:** https://g-scores-app-ydap.onrender.com/api
-- **Backend Health:** https://g-scores-app-ydap.onrender.com/api/health
-
-> **Note:** The backend is deployed on Render. The first request may take a few minutes while
-> the service completes its cold start. If data loading is slow or a connection error appears,
-> wait for the backend to start and then refresh the page.
