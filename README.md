@@ -33,6 +33,7 @@ Database schema changes are managed through TypeORM migrations. CSV ingestion us
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/api/health` | Backend health status |
+| `GET` | `/api/health/ready` | PostgreSQL readiness status |
 | `GET` | `/api/scores/:sbd` | Scores and levels for one registration number |
 | `GET` | `/api/scores/report/levels` | Candidate counts by subject and score level |
 | `GET` | `/api/scores/top?group=A` | Top 10 for A, A01, B, C, or D01 |
@@ -86,7 +87,18 @@ DB_SSL_REJECT_UNAUTHORIZED=true \
 docker compose up --build -d
 ```
 
-The backend container starts migrations and then seeds the CSV dataset.
+The backend container runs pending migrations and starts the API. The CSV seeder is run explicitly
+to seed the database once:
+
+```bash
+cd backend
+npm run seed
+```
+
+## Health Endpoints
+
+- `GET /api/health` - liveness check for the backend process.
+- `GET /api/health/ready` - readiness check that executes `SELECT 1` against PostgreSQL.
 
 ## Run Manually
 
@@ -154,3 +166,7 @@ npm run build
 - **Live Application:** https://g-scores-app-three.vercel.app/
 - **Backend API:** https://g-scores-app-ydap.onrender.com/api
 - **Backend Health:** https://g-scores-app-ydap.onrender.com/api/health
+
+> **Note:** The backend is deployed on Render. The first request may take a few minutes while
+> the service completes its cold start. If data loading is slow or a connection error appears,
+> wait for the backend to start and then refresh the page.
