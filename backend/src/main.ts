@@ -18,10 +18,18 @@ async function bootstrap() {
   )
     .split(',')
     .map((origin) => origin.trim())
+    .map((origin) => origin.replace(/\/+$/, ''))
     .filter(Boolean);
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin:
+      (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+        callback(null, false);
+      },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
   });

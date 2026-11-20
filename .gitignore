@@ -14,3 +14,7 @@ build/
 # Logs & OS files
 *.log
 .DS_Store
+
+# Local AI agent instructions
+AGENTS.md
+.agent/

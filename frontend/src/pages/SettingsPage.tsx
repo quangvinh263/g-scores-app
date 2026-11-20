@@ -133,7 +133,10 @@ export function SettingsPage() {
             </Text>
             <div className="flex items-center justify-between gap-3">
               <Text strong>
-                {import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api'}
+                {import.meta.env.VITE_API_URL ??
+                  (import.meta.env.PROD
+                    ? 'https://g-scores-app-ydap.onrender.com/api'
+                    : 'http://localhost:3000/api')}
               </Text>
               {apiStatus === 'online' && (
                 <Badge status="success" text="Connected" />

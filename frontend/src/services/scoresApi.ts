@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+const productionApiUrl =
+  'https://g-scores-app-ydap.onrender.com/api';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
+  baseURL:
+    import.meta.env.VITE_API_URL ??
+    (import.meta.env.PROD ? productionApiUrl : 'http://localhost:3000/api'),
   timeout: 15000,
 });
 
