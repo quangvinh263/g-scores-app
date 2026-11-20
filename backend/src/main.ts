@@ -22,14 +22,7 @@ async function bootstrap() {
     .filter(Boolean);
 
   app.enableCors({
-    origin:
-      (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-          return;
-        }
-        callback(null, false);
-      },
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
   });
